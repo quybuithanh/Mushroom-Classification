@@ -1,0 +1,63 @@
+{
+  "model_version": "1.0.0",
+  "data_version": "346b29ee7911ea8c7fbd88b66e03a07c4d6ceaa77d7fa93cd1ea2ea96ea9965c",
+  "model_type": "RandomForestClassifier",
+  "model_params": {
+    "bootstrap": true,
+    "ccp_alpha": 0.0,
+    "class_weight": null,
+    "criterion": "gini",
+    "max_depth": null,
+    "max_features": "sqrt",
+    "max_leaf_nodes": null,
+    "max_samples": null,
+    "min_impurity_decrease": 0.0,
+    "min_samples_leaf": 1,
+    "min_samples_split": 2,
+    "min_weight_fraction_leaf": 0.0,
+    "monotonic_cst": null,
+    "n_estimators": 100,
+    "n_jobs": null,
+    "oob_score": false,
+    "random_state": 42,
+    "verbose": 0,
+    "warm_start": false
+  },
+  "features": [
+    "cap_shape",
+    "cap_surface",
+    "cap_color",
+    "bruises",
+    "odor",
+    "gill_attachment",
+    "gill_spacing",
+    "gill_size",
+    "gill_color",
+    "stalk_shape",
+    "stalk_root",
+    "stalk_surface_above_ring",
+    "stalk_surface_below_ring",
+    "stalk_color_above_ring",
+    "stalk_color_below_ring",
+    "veil_type",
+    "veil_color",
+    "ring_number",
+    "ring_type",
+    "spore_print_color",
+    "population",
+    "habitat"
+  ],
+  "n_features": 22,
+  "classes": [
+    "e",
+    "p"
+  ],
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0
+  },
+  "sklearn_version": "1.7.2",
+  "trained_at": "2026-07-06T15:09:07.006206"
+}

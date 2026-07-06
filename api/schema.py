@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import List
 
 class MushroomInput(BaseModel):
     cap_shape: str
@@ -23,3 +24,6 @@ class MushroomInput(BaseModel):
     spore_print_color: str
     population: str
     habitat: str
+
+class MushroomBatchInput(BaseModel):
+    items: List[MushroomInput]    
