@@ -14,6 +14,7 @@ app = FastAPI(
 )
 
 Base.metadata.create_all(bind=engine)
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MODEL_PATH = os.path.join(BASE_DIR, "models", "best_model.pkl")
@@ -43,6 +44,11 @@ def model_info():
     class_names = [LABEL_MAP[c] for c in poisonous_encoder.inverse_transform(best_model.classes_)]
 
     params = best_model.get_params()
+    
+    feature_importances = {
+        feature: round(float(importance), 4)
+        for feature, importance in zip(best_model.feature_names_in_, best_model.feature_importances_)
+    }
 
     return {
         "model_type": type(best_model).__name__,
@@ -53,6 +59,7 @@ def model_info():
         "n_features": int(best_model.n_features_in_),
         "features": list(best_model.feature_names_in_),
         "classes": class_names,
+        "feature_importances": feature_importances,
     }
 
 def run_prediction(input_dict: dict):
