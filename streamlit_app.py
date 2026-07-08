@@ -1,4 +1,5 @@
 import io
+import os
 from datetime import datetime
 
 import pandas as pd
@@ -13,7 +14,7 @@ st.set_page_config(
 
 
 if "api_base_url" not in st.session_state:
-    st.session_state.api_base_url = "http://127.0.0.1:8000"
+    st.session_state.api_base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
 
 
 def call_api(method: str, path: str, json_body: dict | None = None, timeout: int = 15):
@@ -175,7 +176,7 @@ def render_home():
     st.bar_chart(dist)
 
     st.subheader("5 lần dự đoán gần nhất")
-    st.dataframe(df.head(5), width='stretch')
+    st.dataframe(df.head(5), use_container_width=True)
 
 # Dự đoán
 
@@ -271,7 +272,7 @@ def render_history():
     if filter_choice != "Tất cả":
         df = df[df["prediction"] == filter_choice]
 
-    st.dataframe(df, width='stretch')
+    st.dataframe(df, use_container_width=True)
 
     csv_bytes = df.to_csv(index=False).encode("utf-8-sig")
     st.download_button(
@@ -307,7 +308,7 @@ def render_batch():
             init_df,
             column_config=column_config,
             num_rows="dynamic",
-            width='stretch',
+            use_container_width=True,
             key="batch_editor",
         )
 
@@ -333,7 +334,7 @@ def render_batch():
             if missing:
                 st.error(f"File CSV thiếu các cột: {sorted(missing)}")
             else:
-                st.dataframe(csv_df, width='stretch')
+                st.dataframe(csv_df, use_container_width=True)
                 if st.button("Dự đoán hàng loạt (từ file CSV)", type="primary"):
                     items = csv_df[FEATURES].to_dict(orient="records")
 
@@ -355,7 +356,7 @@ def render_batch():
             rows.append(row)
 
         result_df = pd.DataFrame(rows)
-        st.dataframe(result_df, width='stretch')
+        st.dataframe(result_df, use_container_width=True)
 
         csv_bytes = result_df.to_csv(index=False).encode("utf-8-sig")
         st.download_button(
