@@ -17,7 +17,7 @@ if "api_base_url" not in st.session_state:
     st.session_state.api_base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
 
 
-def call_api(method: str, path: str, json_body: dict | None = None, timeout: int = 15):
+def call_api(method: str, path: str, json_body: dict | None = None, timeout: int = 120):
     url = st.session_state.api_base_url.rstrip("/") + path
     try:
         response = requests.request(method, url, json=json_body, timeout=timeout)
@@ -144,8 +144,6 @@ else:
     st.sidebar.error("Không kết nối được API")
     st.sidebar.caption(str(health_data))
 
-# Trang chủ / Dashboard
-
 def render_home():
     st.title("Dashboard — Mushroom Classification")
     st.caption("Demo giao diện cho REST API phân loại nấm độc/ăn được.")
@@ -175,10 +173,34 @@ def render_home():
     dist = df["prediction"].value_counts()
     st.bar_chart(dist)
 
+    left, right = st.columns([8, 2])
+
+    with right:
+        if st.button("Xóa toàn bộ lịch sử", type="secondary"):
+            st.session_state["confirm_delete"] = True
+
+    if st.session_state.get("confirm_delete", False):
+        st.warning("Bạn có chắc chắn muốn xóa toàn bộ lịch sử không?")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            if st.button("Xóa", type="primary"):
+                ok, result = call_api("DELETE", "/history")
+                if ok:
+                    st.success("Đã xóa toàn bộ lịch sử.")
+                    st.session_state["confirm_delete"] = False
+                    st.rerun()
+                else:
+                    st.error(result)
+
+        with col2:
+            if st.button("Hủy"):
+                st.session_state["confirm_delete"] = False
+                st.rerun()
+
     st.subheader("5 lần dự đoán gần nhất")
     st.dataframe(df.head(5), use_container_width=True)
-
-# Dự đoán
 
 def render_predict():
     st.title("Dự đoán 1 mẫu nấm")
@@ -223,7 +245,7 @@ def render_predict():
 # Thông tin model
 
 def render_model_info():
-    st.title("📊 Thông tin model")
+    st.title("Thông tin model")
 
     ok, info = call_api("GET", "/model-info")
     if not ok:
@@ -282,8 +304,6 @@ def render_history():
         mime="text/csv",
     )
 
-# Dự đoán hàng loạt (batch) + xuất CSV
-
 def render_batch():
     st.title("Dự đoán hàng loạt (Batch)")
 
@@ -298,10 +318,16 @@ def render_batch():
         for field in FEATURES:
             display_options = [option_display(field, c) for c, _ in FIELD_OPTIONS[field]]
             column_config[field] = st.column_config.SelectboxColumn(
-                FIELD_LABELS_VI[field], options=display_options, required=True,
+                FIELD_LABELS_VI[field],
+                options=display_options,
+                required=True,
             )
 
-        default_row = {field: option_display(field, DEFAULT_SAMPLE[field]) for field in FEATURES}
+        default_row = {
+            field: option_display(field, DEFAULT_SAMPLE[field])
+            for field in FEATURES
+        }
+
         init_df = pd.DataFrame([default_row])
 
         edited_df = st.data_editor(
@@ -320,6 +346,7 @@ def render_batch():
 
     with tab_csv:
         template_df = pd.DataFrame([DEFAULT_SAMPLE])
+
         st.download_button(
             "Tải file CSV mẫu",
             data=template_df.to_csv(index=False).encode("utf-8-sig"),
@@ -327,27 +354,68 @@ def render_batch():
             mime="text/csv",
         )
 
-        uploaded = st.file_uploader("Tải lên file CSV (đúng 22 cột mã, xem file mẫu ở trên)", type=["csv"])
+        uploaded = st.file_uploader(
+            "Tải lên file CSV (đúng 22 cột mã, xem file mẫu ở trên)",
+            type=["csv"],
+        )
+
         if uploaded is not None:
             csv_df = pd.read_csv(uploaded, dtype=str)
+            if "cap_shape" not in csv_df.columns:
+                uploaded.seek(0)
+                csv_df = pd.read_csv(uploaded, header=None, dtype=str)
+                if csv_df.shape[1] == 23:
+                    csv_df.columns = ["class"] + FEATURES
+                    csv_df = csv_df.drop(columns=["class"])
+                elif csv_df.shape[1] == 22:
+                    csv_df.columns = FEATURES
+                else:
+                    st.error(f"File có {csv_df.shape[1]} cột. Cần 22 hoặc 23 cột.")
+                    st.stop()
             missing = set(FEATURES) - set(csv_df.columns)
             if missing:
-                st.error(f"File CSV thiếu các cột: {sorted(missing)}")
-            else:
-                st.dataframe(csv_df, use_container_width=True)
-                if st.button("Dự đoán hàng loạt (từ file CSV)", type="primary"):
-                    items = csv_df[FEATURES].to_dict(orient="records")
+                st.error(f"Thiếu cột: {missing}")
+                st.stop()
+            st.dataframe(csv_df, use_container_width=True)
+            if st.button("Dự đoán hàng loạt (từ file CSV)", type="primary"):
+                items = csv_df[FEATURES].to_dict(orient="records")
 
     if items:
-        ok, result = call_api("POST", "/predict/batch", {"items": items})
-        if not ok:
-            st.error(result)
-            return
 
-        st.success(f"Đã dự đoán {result['count']} mẫu.")
+        BATCH_SIZE = 500
+
+        all_results = []
+
+        progress = st.progress(0)
+
+        for i in range(0, len(items), BATCH_SIZE):
+
+            batch = items[i:i + BATCH_SIZE]
+
+            ok, result = call_api(
+                "POST",
+                "/predict/batch",
+                {"items": batch},
+                timeout=120,
+            )
+
+            if not ok:
+                st.error(result)
+                return
+
+            all_results.extend(result["results"])
+
+            progress.progress(min(i + BATCH_SIZE, len(items)) / len(items))
+
+            st.write(
+                f"Đã xử lý {min(i + BATCH_SIZE, len(items))}/{len(items)} mẫu"
+            )
+
+        st.success(f"Đã dự đoán {len(all_results)} mẫu.")
 
         rows = []
-        for r in result["results"]:
+
+        for r in all_results:
             row = dict(r["input"])
             row["prediction"] = r["prediction"]
             row["confidence"] = r["confidence"]
@@ -356,15 +424,21 @@ def render_batch():
             rows.append(row)
 
         result_df = pd.DataFrame(rows)
+
         st.dataframe(result_df, use_container_width=True)
 
-        csv_bytes = result_df.to_csv(index=False).encode("utf-8-sig")
+        csv_bytes = result_df.to_csv(
+            index=False,
+            encoding="utf-8-sig",
+        )
+
         st.download_button(
             "Xuất ra CSV",
             data=csv_bytes,
             file_name=f"batch_result_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
             mime="text/csv",
         )
+
 
 # Điều hướng
 

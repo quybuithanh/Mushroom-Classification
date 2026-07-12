@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from api.schema import MushroomInput, MushroomBatchInput
 from api.database import Base, engine, get_db
 from api import crud
+from fastapi.responses import FileResponse
+import tempfile
 
 import joblib
 import pandas as pd
@@ -65,6 +67,8 @@ def model_info():
 def run_prediction(input_dict: dict):
 
     df = pd.DataFrame([input_dict])
+    df["stalk_root"] = df["stalk_root"].replace("?", "b")
+
     for column in df.columns:
         df[column] = encoders[column].transform(df[column])
 
@@ -105,12 +109,11 @@ def predict(data: MushroomInput, db: Session = Depends(get_db)):
 
 @app.post("/predict/batch")
 def predict_batch(data: MushroomBatchInput, db: Session = Depends(get_db)):
-    """Dự đoán nhiều con nấm cùng lúc. Mỗi con vẫn được lưu riêng vào MySQL."""
-
     results = []
 
     for item in data.items:
         input_dict = item.model_dump()
+
         predicted_label, confidence, probability_by_class = run_prediction(input_dict)
 
         crud.create_prediction(
@@ -130,7 +133,7 @@ def predict_batch(data: MushroomBatchInput, db: Session = Depends(get_db)):
 
     return {
         "count": len(results),
-        "results": results
+        "results": results,
     }
 
 @app.get("/history")
@@ -150,3 +153,12 @@ def history(limit: int = 20, db: Session = Depends(get_db)):
         }
         for r in records
     ]
+
+@app.get("/stats")
+def statistics(db: Session = Depends(get_db)):
+    return crud.get_statistics(db)
+
+@app.delete("/history")
+def delete_history(db: Session = Depends(get_db)):
+    crud.delete_all_predictions(db)
+    return {"message": "Đã xóa toàn bộ lịch sử dự đoán."}
