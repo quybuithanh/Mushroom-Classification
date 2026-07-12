@@ -148,7 +148,7 @@ def render_home():
     st.title("Dashboard — Mushroom Classification")
     st.caption("Demo giao diện cho REST API phân loại nấm độc/ăn được.")
 
-    ok, data = call_api("GET", "/history?limit=500")
+    ok, data = call_api("GET", "/history?limit=8500")
     if not ok:
         st.warning(f"Chưa lấy được dữ liệu lịch sử: {data}")
         return
@@ -381,11 +381,8 @@ def render_batch():
                 items = csv_df[FEATURES].to_dict(orient="records")
 
     if items:
-
         BATCH_SIZE = 500
-
         all_results = []
-
         progress = st.progress(0)
 
         for i in range(0, len(items), BATCH_SIZE):
