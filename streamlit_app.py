@@ -381,7 +381,7 @@ def render_batch():
                 items = csv_df[FEATURES].to_dict(orient="records")
 
     if items:
-        BATCH_SIZE = 500
+        BATCH_SIZE = 10000
         all_results = []
         progress = st.progress(0)
 

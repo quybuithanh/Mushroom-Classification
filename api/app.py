@@ -65,7 +65,6 @@ def model_info():
     }
 
 def run_prediction(input_dict: dict):
-
     df = pd.DataFrame([input_dict])
     df["stalk_root"] = df["stalk_root"].replace("?", "b")
 
@@ -88,6 +87,32 @@ def run_prediction(input_dict: dict):
 
     return predicted_label, confidence, probability_by_class
 
+def run_batch_prediction(input_dicts: list[dict]):
+    df = pd.DataFrame(input_dicts)
+    df["stalk_root"] = df["stalk_root"].replace("?", "b")
+
+    for column in df.columns:
+        df[column] = encoders[column].transform(df[column])
+
+    predictions = best_model.predict(df)
+    probabilities_list = best_model.predict_proba(df)
+
+    poisonous_encoder = encoders["poisonous"]
+    class_labels = poisonous_encoder.inverse_transform(best_model.classes_)
+
+    results = []
+    for prediction, probabilities in zip(predictions, probabilities_list):
+        probability_by_class = {
+            LABEL_MAP[cls]: round(float(prob), 4)
+            for cls, prob in zip(class_labels, probabilities)
+        }
+        predicted_label = LABEL_MAP[poisonous_encoder.inverse_transform([prediction])[0]]
+        confidence = round(float(max(probabilities)), 4)
+        
+        results.append((predicted_label, confidence, probability_by_class))
+
+    return results
+
 @app.post("/predict")
 def predict(data: MushroomInput, db: Session = Depends(get_db)):
     input_dict = data.model_dump()
@@ -109,27 +134,29 @@ def predict(data: MushroomInput, db: Session = Depends(get_db)):
 
 @app.post("/predict/batch")
 def predict_batch(data: MushroomBatchInput, db: Session = Depends(get_db)):
+    input_dicts = [item.model_dump() for item in data.items]
+    prediction_results = run_batch_prediction(input_dicts)
+    
+    db_records_data = []
     results = []
 
-    for item in data.items:
-        input_dict = item.model_dump()
-
-        predicted_label, confidence, probability_by_class = run_prediction(input_dict)
-
-        crud.create_prediction(
-            db=db,
-            input_data=input_dict,
-            prediction=predicted_label,
-            confidence=confidence,
-            probabilities=probability_by_class,
-        )
-
+    for input_dict, (predicted_label, confidence, probability_by_class) in zip(input_dicts, prediction_results):
+        db_records_data.append({
+            "input_data": input_dict,
+            "prediction": predicted_label,
+            "confidence": confidence,
+            "probabilities": probability_by_class
+        })
+        
         results.append({
             "input": input_dict,
             "prediction": predicted_label,
             "confidence": confidence,
             "probabilities": probability_by_class,
         })
+
+    if db_records_data:
+        crud.create_predictions_bulk(db, db_records_data)
 
     return {
         "count": len(results),

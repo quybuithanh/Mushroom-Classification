@@ -1,3 +1,4 @@
+from sqlalchemy import insert
 from sqlalchemy.orm import Session
 from api import models
 from sqlalchemy import func, text
@@ -25,7 +26,6 @@ def create_prediction(
     db.refresh(record)
 
     return record
-
 
 def get_predictions(db: Session, limit: int = 50):
     return (
@@ -57,4 +57,17 @@ def get_statistics(db):
 
 def delete_all_predictions(db: Session):
     db.execute(text("TRUNCATE TABLE prediction_history"))
+    db.commit()
+
+def create_predictions_bulk(db: Session, records_data: list):
+    mapped_data = []
+    for item in records_data:
+        row = item["input_data"].copy()
+        row["prediction"] = item["prediction"]
+        row["confidence"] = item["confidence"]
+        row["prob_edible"] = item["probabilities"].get("edible", 0.0)
+        row["prob_poisonous"] = item["probabilities"].get("poisonous", 0.0)
+        mapped_data.append(row)
+    
+    db.execute(insert(PredictionHistory), mapped_data)
     db.commit()
