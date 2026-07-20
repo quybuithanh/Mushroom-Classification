@@ -4,7 +4,7 @@ GitHub Repository (Private):
 https://github.com/quybuithanh/Mushroom-Classification
 
 # II. Link video demo: 
-https://drive.google.com/file/d/11leD89pzBbjEUeofhycSEgUfFm5-CjOo/view?usp=drive_link
+https://drive.google.com/file/d/1B3RLTQhj9ncHeNFX9Qnmc88Gjjx7Rqtx/view?usp=sharing
 
 # III. Phân công công việc
 
