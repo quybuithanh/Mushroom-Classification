@@ -1,3 +1,65 @@
+# BÁO CÁO NỘP BÀI TẬP LỚN
+# I. Thông tin Repository
+GitHub Repository (Private):
+https://github.com/quybuithanh/Mushroom-Classification
+
+# II. Link video demo: 
+https://drive.google.com/file/d/11leD89pzBbjEUeofhycSEgUfFm5-CjOo/view?usp=drive_link
+
+# III. Phân công công việc
+
+| Họ và tên     | MSSV       | Công việc                                               | Đóng góp |
+| ------------- | ---------- | ------------------------------------------------------- | -------: |
+| Vũ Tiến Đạt   | 2451012024 | - Xây dựng và hoàn thiện giao diện Streamlit            |     100% |
+                             | - Đóng gói toàn bộ hệ thống bằng Docker                 |          |
+                             | - Chỉnh cấu hình môi trường chạy cho FastAPI, MySQL và  |          |
+                             |Streamlit                                                |          |
+                             | - Kiểm thử, sửa lỗi                                     |          |
+                             | - Viết README, hướng dẫn chạy dự án                     |          |
+|----------------------------|---------------------------------------------------------|          |
+| Bùi Thanh Quý | 2451012083 | - Khởi tạo dự án và cấu trúc ban đầu                    |    100%  |
+                             | - Tiền xử lý dữ liệu                                    |          |
+                             | - Feature Engineering                                   |          |
+                             | - Train model                                           |          |
+                             | - Viết README                                           |          |
+|----------------------------|---------------------------------------------------------|----------|
+| Đỗ Ngọc Tuấn  | 2451012126 | - Xây dựng FastAPI và các API                           |     100% |
+                             | - Kết nối API với cơ sở dữ liệu và mô hình              |          |
+                             | - Kiểm thử API, sửa lỗi và tích hợp mô hình vào hệ thống|          |
+                             | - Hoàn thiện các chức năng trước khi bàn giao           |          |
+|----------------------------|---------------------------------------------------------|----------|
+
+# IV. Khai báo sử dụng AI
+Nhóm có sử dụng công cụ AI trong quá trình thực hiện bài tập.
+
+| Công cụ | Mục đích sử dụng                                                            |
+| ------- | --------------------------------------------------------------------------- |
+| ChatGPT | Giải thích lỗi, tối ưu code, viết README, hỗ trợ Docker, FastAPI, Streamlit |
+| Gemini  | Kiểm tra, sửa lỗi, tối ưu code                                              | 
+| Claude  | Kiểm tra, sửa lỗi, tối ưu code                                              |
+
+
+# V. Model Artifact
+File model được lưu trong project:
+
+models/
+|- best_model.pkl
+|- encoders.pkl
+
+## Cách load model
+import joblib
+
+model = joblib.load("models/best*model.pkl")
+print("Loại model:", type(model))
+print("Thông số:")
+print(model.get_params())
+encoders = joblib.load("models/encoders.pkl")
+print("\nCác encoder:")
+print(encoders.keys())
+print("\nGiá trị của cap_shape:")
+print(encoders["cap_shape"].classes*)
+
+
 # Mushroom-Classification
 * Mô tả bài toán: Phân loại nấm là ăn được hay độc từ 22 đặc trưng hình thái phân loại (màu mũ, mùi, hình thái phiến nấm…). Dữ liệu thuần phân loại, lý tưởng để thực hành mã hóa biến và cây quyết định; có thể đạt độ chính xác gần như tuyệt đối.
 
@@ -62,5 +124,4 @@ B5. Mở cửa sổ terminal khác và gõ "streamlit run streamlit_app.py" đ�
 7. Các tệp Docker
 - Dockerfile: Dùng để tạo docker image cho API FastAPI, cài đặt môi trường và các thư viện cần thiết để API có thể chạy
 - Dockerfile.streamlit: Dùng để tạo docker image cho giao diện streamlit, cài đặt các thư viện và cấu hình để chạy giao diện web
-- docker-compose.yml: Dùng để khởi động và kết nối các container MySQL, FastAPI và Streamlit, chỉ cần gõ "docker compose up --build" ở terminal trong thư mục dự án thì toàn bộ hệ thống sẽ hoạt động
-
+- docker-compose.yml: Dùng để khởi động và kết nối các container MySQL, FastAPI và Streamlit, chỉ cần gõ "docker compose up --build" ở terminal trong thư mục dự án là toàn bộ hệ thống sẽ hoạt động

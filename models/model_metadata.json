@@ -1,6 +1,6 @@
 {
   "model_version": "1.0.0",
-  "data_version": "346b29ee7911ea8c7fbd88b66e03a07c4d6ceaa77d7fa93cd1ea2ea96ea9965c",
+  "data_version": "e65d082030501a3ebcbcd7c9f7c71aa9d28fdfff463bf4cf4716a3fe13ac360e",
   "model_type": "RandomForestClassifier",
   "model_params": {
     "bootstrap": true,
@@ -59,5 +59,5 @@
     "f1_score": 1.0
   },
   "sklearn_version": "1.7.2",
-  "trained_at": "2026-07-06T15:09:07.006206"
+  "trained_at": "2026-07-20T20:24:21.966929"
 }
